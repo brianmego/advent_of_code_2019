@@ -1,6 +1,7 @@
--module(prog1).
--export([solve/0]).
+-module(prog2).
+-export([solve/0, get_fuel/1]).
 
+% Same as prog1, but recursively figure out fuel for answers
 solve() ->
     Modules = [
                50962, 126857, 127476, 136169, 62054, 116866, 123235, 147126, 146767, 140795, 54110,
@@ -19,7 +20,17 @@ solve() ->
 get_fuel([H|T]) -> get_fuel([H|T], 0).
 
 get_fuel([], TotalFuel) -> TotalFuel;
-get_fuel([H|T], TotalFuel) -> 
-    NewFuel = TotalFuel + ((H div 3) - 2),
-    get_fuel(T, NewFuel);
-get_fuel(Module, TotalFuel) -> ((Module div 3) - 2) + TotalFuel.
+get_fuel([H|T], TotalFuel) ->
+    get_fuel(
+      T,
+      TotalFuel + get_module_fuel(H)
+     ).
+
+get_module_fuel(ModuleWeight) -> get_module_fuel(ModuleWeight, 0).
+
+get_module_fuel(ModuleWeight, ModuleFuel) ->
+    NewWeight = ((ModuleWeight div 3) - 2),
+    if
+        NewWeight > 6 -> get_module_fuel(NewWeight, ModuleFuel + NewWeight);
+        NewWeight =<6 -> ModuleFuel + NewWeight
+    end.
