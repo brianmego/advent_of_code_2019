@@ -1,5 +1,5 @@
 -module(prog2).
--export([solve/0, get_fuel/1]).
+-export([solve/0]).
 
 % Same as prog1, but recursively figure out fuel for answers
 solve() ->
