@@ -1,11 +1,12 @@
 #!/bin/bash
 
 PROBLEM=$1
+PART=$2
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 if [[ -f prog$1.erl ]]; then
-    time escript runner.erl prog$1
+    time escript runner.erl prog$1 $PART
     printf "\n"
 else
     printf "${YELLOW}None${NC}\n"

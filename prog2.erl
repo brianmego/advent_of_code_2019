@@ -1,36 +1,65 @@
 -module(prog2).
--export([solve/0]).
+-export([solve/0, solve_2/0]).
+-import(lists,[nthtail/2, nth/2]).
 
-% Same as prog1, but recursively figure out fuel for answers
+-define(Input, [1,0,0,3,1,1,2,3,1,3,4,3,1,5,0,3,2,13,1,19,1,19,6,23,
+                1,23,6,27,1,13,27,31,2,13,31,35,1,5,35,39,2,39,13,43,
+                1,10,43,47,2,13,47,51,1,6,51,55,2,55,13,59,1,59,10,
+                63,1,63,10,67,2,10,67,71,1,6,71,75,1,10,75,79,1,79,
+                9,83,2,83,6,87,2,87,9,91,1,5,91,95,1,6,95,99,1,99,9,
+                103,2,10,103,107,1,107,6,111,2,9,111,115,1,5,115,119,
+                1,10,119,123,1,2,123,127,1,127,6,0,99,2,14,0,0]).
+
 solve() ->
-    Modules = [
-               50962, 126857, 127476, 136169, 62054, 116866, 123235, 147126, 146767, 140795, 54110,
-               106452, 98413, 114925, 141914, 54864, 120093, 118166, 81996, 143924, 145941, 96950,
-               126488, 85764, 111438, 63278, 147558, 128982, 123857, 58646, 80757, 98260, 97143,
-               136609, 99349, 63167, 142129, 144645, 97212, 70162, 98044, 125931, 103859, 67890,
-               67797, 79263, 134255, 130303, 73367, 103091, 97315, 74892, 82311, 51157, 79802,
-               138401, 108423, 63111, 61441, 102862, 53184, 125543, 147413, 117762, 106771, 115805,
-               66424, 85851, 53101, 82736, 136768, 130745, 140135, 101770, 55349, 143419, 60108,
-               84990, 91544, 75240, 92709, 134369, 140901, 59910, 63641, 54966, 104671, 71950,
-               60358, 127289, 147362, 70799, 82870, 108630, 53450, 106888, 129843, 53227, 58758,
-               137751
-              ],
-    get_fuel(Modules).
+    Input = [nth(1, ?Input), 12, 2 | nthtail(3, ?Input)],
+    [H|_] = solve(Input),
+    12490719 = H.
 
-get_fuel([H|T]) -> get_fuel([H|T], 0).
+solve(L) -> handle(1, L).
 
-get_fuel([], TotalFuel) -> TotalFuel;
-get_fuel([H|T], TotalFuel) ->
-    get_fuel(
-      T,
-      TotalFuel + get_module_fuel(H)
-     ).
+solve_2() ->
+    Input = [nth(1, ?Input), 1, 1 | nthtail(3, ?Input)],
+    {Noun, Verb} = solve_2(Input, 19690720),
+    (100 * Noun) + Verb.
 
-get_module_fuel(ModuleWeight) -> get_module_fuel(ModuleWeight, 0).
-
-get_module_fuel(ModuleWeight, ModuleFuel) ->
-    NewWeight = ((ModuleWeight div 3) - 2),
+solve_2(L, Target) ->
+    [Output|_] = solve(L),
+    [OpCode, Noun, Verb | T] = L,
+    LoopSize = length(L) - 1,
     if
-        NewWeight > 6 -> get_module_fuel(NewWeight, ModuleFuel + NewWeight);
-        NewWeight =<6 -> ModuleFuel + NewWeight
+        Output == Target -> {Noun, Verb};
+        Verb rem LoopSize /= 0 -> solve_2([OpCode, Noun, Verb+1 | T], Target);
+        Verb rem LoopSize == 0 -> solve_2([OpCode, Noun+1, 1 | T], Target)
     end.
+
+
+-record(instruction, {
+     opCode,
+     xIndex,
+     yIndex,
+     outPos
+    }
+  ).
+
+handle(Index, Integers) ->
+    Size=4,
+    [OpCode, XIndex, YIndex, OutPos] = lists:sublist(Integers, Index, Size),
+    Instruction = #instruction{opCode=OpCode, xIndex=XIndex, yIndex=YIndex, outPos=OutPos},
+    handle_opcode(Instruction, Integers, Index).
+
+
+handle_opcode(#instruction{opCode=99}, Integers, _) -> Integers;
+handle_opcode(#instruction{opCode=1} = Instruction, Integers, Index) -> handle_opcode(Instruction, Integers, Index, add);
+handle_opcode(#instruction{opCode=2} = Instruction, Integers, Index) -> handle_opcode(Instruction, Integers, Index, mult).
+
+handle_opcode(Instruction, Integers, Index, Operation) ->
+    X = lists:nth(Instruction#instruction.xIndex + 1, Integers),
+    Y = lists:nth(Instruction#instruction.yIndex + 1, Integers),
+    NumToUpdate = get_num_to_update(X, Y, Operation),
+    NewIntegers=lists:sublist(Integers, Instruction#instruction.outPos) ++
+    [NumToUpdate] ++
+    lists:nthtail(Instruction#instruction.outPos + 1, Integers),
+    handle(Index + 4, NewIntegers).
+
+get_num_to_update(X, Y, add) -> X + Y;
+get_num_to_update(X, Y, mult) -> X * Y.
